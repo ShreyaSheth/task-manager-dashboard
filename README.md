@@ -1,36 +1,344 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📝 Task Manager Dashboard
 
-## Getting Started
+A modern, full-stack task management application built with Next.js 16, featuring JWT-based authentication, project management, and task tracking capabilities.
 
-First, run the development server:
+## ✨ Features
+
+### 🔐 Authentication System
+
+- **User Signup** - Create new accounts with email, name, and password
+- **User Login** - Secure authentication with JWT tokens
+- **Protected Routes** - Middleware-based route protection
+- **Session Management** - HTTP-only cookies for secure token storage
+- **Auto-redirect** - Seamless navigation for authenticated/unauthenticated users
+
+### 🎨 Modern UI/UX
+
+- **Material-UI (MUI) Components** - Professional, accessible UI components
+- **TailwindCSS** - Utility-first CSS for custom styling
+- **Responsive Design** - Mobile-first, works on all screen sizes
+- **Beautiful Gradients** - Eye-catching color schemes
+- **Smooth Animations** - Hover effects and transitions
+
+### 📊 Dashboard
+
+- **Stats Overview** - Track projects, tasks, and completion rates
+- **Quick Actions** - Easy access to create projects and tasks
+- **User Profile** - Display account information
+- **Calendar Widget** - Today's overview section
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ installed
+- npm or yarn package manager
+
+### Installation
+
+1. **Clone the repository**
+
+```bash
+git clone <your-repo-url>
+cd task-manager-dashboard
+```
+
+2. **Install dependencies**
+
+```bash
+npm install
+```
+
+3. **Set up environment variables**
+   Create a `.env.local` file in the root directory:
+
+```env
+# JWT Secret - MUST be changed in production
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+
+# Environment
+NODE_ENV=development
+```
+
+4. **Run the development server**
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📂 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+task-manager-dashboard/
+├── app/
+│   ├── api/
+│   │   └── auth/
+│   │       ├── signup/route.ts      # Signup API endpoint
+│   │       ├── login/route.ts       # Login API endpoint
+│   │       ├── logout/route.ts      # Logout API endpoint
+│   │       └── me/route.ts          # Get current user
+│   ├── dashboard/
+│   │   └── page.tsx                 # Dashboard page
+│   ├── login/
+│   │   └── page.tsx                 # Login page
+│   ├── signup/
+│   │   └── page.tsx                 # Signup page
+│   ├── layout.tsx                   # Root layout with Redux Provider
+│   ├── page.tsx                     # Landing page
+│   └── globals.css                  # Global styles
+├── store/
+│   ├── index.ts                     # Redux store configuration
+│   ├── hooks.ts                     # Typed Redux hooks
+│   ├── StoreProvider.tsx            # Redux Provider component
+│   └── slices/
+│       └── authSlice.ts             # Authentication state slice
+├── lib/
+│   ├── auth.ts                      # Authentication service
+│   ├── jwt.ts                       # JWT utilities
+│   └── users.ts                     # In-memory user storage
+├── middleware.ts                    # Route protection middleware
+├── REDUX_SETUP.md                   # Redux documentation
+└── package.json
+```
 
-## Learn More
+## 🔧 Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+### Frontend
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Next.js 16.1** - React framework with App Router
+- **React 19.2** - UI library
+- **TypeScript** - Type-safe code
+- **Material-UI (MUI) 7.3** - Component library
+- **TailwindCSS 4** - Utility-first CSS
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Backend (API Routes)
 
-## Deploy on Vercel
+- **Next.js API Routes** - Serverless API endpoints
+- **JWT (jsonwebtoken)** - Token-based authentication
+- **bcryptjs** - Password hashing
+- **jose** - JWT operations
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Development
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **ESLint** - Code linting
+- **TypeScript** - Static typing
+
+## 🔐 Authentication Flow
+
+### 1. **Signup**
+
+```
+User fills form → POST /api/auth/signup → Hash password → Create user →
+Generate JWT → Set HTTP-only cookie → Redirect to dashboard
+```
+
+### 2. **Login**
+
+```
+User enters credentials → POST /api/auth/login → Verify password →
+Generate JWT → Set HTTP-only cookie → Redirect to dashboard
+```
+
+### 3. **Protected Routes**
+
+```
+User accesses /dashboard → Middleware checks cookie → Verify JWT →
+Allow access OR Redirect to /login
+```
+
+### 4. **Logout**
+
+```
+User clicks logout → POST /api/auth/logout → Clear cookie →
+Redirect to /login
+```
+
+## 🛡️ Security Features
+
+- ✅ **Password Hashing** - bcryptjs with 10 salt rounds
+- ✅ **HTTP-only Cookies** - Prevents XSS attacks
+- ✅ **JWT Tokens** - Stateless authentication
+- ✅ **Middleware Protection** - Server-side route guards
+- ✅ **Secure Cookies** - HTTPS in production
+- ✅ **SameSite Strict** - CSRF protection
+
+## 📡 API Endpoints
+
+### Authentication
+
+#### POST `/api/auth/signup`
+
+Create a new user account.
+
+**Request Body:**
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "User created successfully",
+  "user": {
+    "id": "1234567890",
+    "email": "john@example.com",
+    "name": "John Doe"
+  }
+}
+```
+
+#### POST `/api/auth/login`
+
+Authenticate an existing user.
+
+**Request Body:**
+
+```json
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Login successful",
+  "user": {
+    "id": "1234567890",
+    "email": "john@example.com",
+    "name": "John Doe"
+  }
+}
+```
+
+#### POST `/api/auth/logout`
+
+Logout current user.
+
+**Response:**
+
+```json
+{
+  "message": "Logout successful"
+}
+```
+
+#### GET `/api/auth/me`
+
+Get current authenticated user.
+
+**Response:**
+
+```json
+{
+  "user": {
+    "id": "1234567890",
+    "email": "john@example.com",
+    "name": "John Doe"
+  }
+}
+```
+
+## 🎯 Usage
+
+### Creating an Account
+
+1. Navigate to the homepage
+2. Click "Sign Up" button
+3. Fill in your name, email, and password
+4. Click "Sign Up"
+5. You'll be automatically logged in and redirected to the dashboard
+
+### Logging In
+
+1. Click "Sign In" from the homepage or navigate to `/login`
+2. Enter your email and password
+3. Click "Sign In"
+4. You'll be redirected to your dashboard
+
+### Logging Out
+
+1. From the dashboard, click the "Logout" button in the top-right corner
+2. You'll be logged out and redirected to the login page
+
+## 🚧 Roadmap
+
+### Phase 1: Authentication ✅
+
+- [x] User signup
+- [x] User login
+- [x] JWT authentication
+- [x] Middleware protection
+- [x] Dashboard UI
+
+### Phase 2: Projects (Coming Soon)
+
+- [ ] Create projects
+- [ ] Edit projects
+- [ ] Delete projects
+- [ ] Project listing
+- [ ] Project details page
+
+### Phase 3: Tasks (Coming Soon)
+
+- [ ] Create tasks within projects
+- [ ] Edit tasks
+- [ ] Delete tasks
+- [ ] Mark tasks as complete
+- [ ] Task priority levels
+- [ ] Task due dates
+
+### Phase 4: Advanced Features (Future)
+
+- [ ] Task filtering and sorting
+- [ ] Search functionality
+- [ ] Dark mode
+- [ ] Export data
+- [ ] Task statistics and charts
+
+## ⚠️ Important Notes
+
+### Development vs Production
+
+**This application uses in-memory storage for users.** This means:
+
+- ✅ Perfect for development and testing
+- ✅ No database setup required
+- ❌ Data is lost when server restarts
+- ❌ Not suitable for production
+
+**For Production:**
+
+- Replace `lib/users.ts` with a real database (MongoDB, PostgreSQL, etc.)
+- Use a strong, random JWT_SECRET
+- Enable HTTPS
+- Implement rate limiting
+- Add input validation and sanitization
+- Set up proper error logging
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 👨‍💻 Author
+
+Built with ❤️ using Next.js, MUI, and TailwindCSS
+
+---
+
+**Need Help?** Feel free to open an issue on GitHub!
