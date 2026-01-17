@@ -8,6 +8,8 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+let handlingUnauthorized = false;
+
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -23,12 +25,44 @@ axiosInstance.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
-    // Don't log 401 for auth/me endpoint (expected when not logged in)
-    const isAuthMeEndpoint = error.config?.url?.includes("/auth/me");
+  async (error) => {
+    const status = error.response?.status;
+    const url: string | undefined = error.config?.url;
 
-    if (error.response?.status === 401 && !isAuthMeEndpoint) {
-      console.error("Unauthorized access - session may have expired");
+    const isAuthMeEndpoint = url?.includes("/auth/me");
+    const isAuthEndpoint =
+      url?.includes("/auth/login") ||
+      url?.includes("/auth/signup") ||
+      url?.includes("/auth/logout") ||
+      isAuthMeEndpoint;
+
+    // If a protected API returns 401, treat it as "session expired":
+    // - clear httpOnly cookie via /api/auth/logout
+    // - redirect to /login
+    if (
+      status === 401 &&
+      !isAuthEndpoint &&
+      typeof window !== "undefined" &&
+      !handlingUnauthorized
+    ) {
+      handlingUnauthorized = true;
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        });
+      } catch {
+        // ignore
+      } finally {
+        // Force navigation to login; middleware will keep protected routes gated.
+        window.location.href = "/login";
+      }
+    }
+
+    // Don't spam console for expected 401 from /auth/me
+    if (!(status === 401 && isAuthMeEndpoint)) {
+      // Keep other errors visible for debugging
+      // console.error("API error:", status, url, error.response?.data);
     }
 
     return Promise.reject(error);

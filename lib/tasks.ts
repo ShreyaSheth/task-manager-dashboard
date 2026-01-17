@@ -1,7 +1,13 @@
-import { Task, CreateTaskDto, UpdateTaskDto, TaskStatus, TaskPriority } from '@/types';
-import { storage } from './storage';
+import {
+  Task,
+  CreateTaskDto,
+  UpdateTaskDto,
+  TaskStatus,
+  TaskPriority,
+} from "@/types";
+import { storage } from "./storage";
 
-const TASKS_KEY = 'tasks';
+const TASKS_KEY = "tasks";
 
 export const taskStorage = {
   getAll: (): Task[] => {
@@ -39,13 +45,20 @@ export const taskStorage = {
 
   update: (id: string, data: UpdateTaskDto, userId: string): Task | null => {
     const tasks = taskStorage.getAll();
-    const index = tasks.findIndex((task) => task.id === id && task.userId === userId);
-    
+    const index = tasks.findIndex(
+      (task) => task.id === id && task.userId === userId
+    );
+
     if (index === -1) return null;
+
+    // Avoid overwriting existing fields with undefined on partial updates
+    const cleanedData = Object.fromEntries(
+      Object.entries(data).filter(([, v]) => v !== undefined)
+    ) as UpdateTaskDto;
 
     const updatedTask: Task = {
       ...tasks[index],
-      ...data,
+      ...cleanedData,
       updatedAt: new Date().toISOString(),
     };
 
@@ -56,8 +69,10 @@ export const taskStorage = {
 
   delete: (id: string, userId: string): boolean => {
     const tasks = taskStorage.getAll();
-    const filteredTasks = tasks.filter((task) => !(task.id === id && task.userId === userId));
-    
+    const filteredTasks = tasks.filter(
+      (task) => !(task.id === id && task.userId === userId)
+    );
+
     if (filteredTasks.length === tasks.length) return false;
 
     storage.set(TASKS_KEY, filteredTasks);
@@ -69,9 +84,9 @@ export const taskStorage = {
     return {
       total: tasks.length,
       todo: tasks.filter((t) => t.status === TaskStatus.TODO).length,
-      inProgress: tasks.filter((t) => t.status === TaskStatus.IN_PROGRESS).length,
+      inProgress: tasks.filter((t) => t.status === TaskStatus.IN_PROGRESS)
+        .length,
       completed: tasks.filter((t) => t.status === TaskStatus.COMPLETED).length,
     };
   },
 };
-

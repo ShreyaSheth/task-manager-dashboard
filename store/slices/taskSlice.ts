@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axiosInstance from "@/lib/axios";
 import { Task, CreateTaskDto, UpdateTaskDto } from "@/types";
+import { logout } from "@/store/slices/authSlice";
 
 interface TaskState {
   tasks: Task[];
@@ -34,7 +35,9 @@ export const fetchTasks = createAsyncThunk(
       const response = await axiosInstance.get("/tasks");
       return response.data.tasks;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || "Failed to fetch tasks");
+      return rejectWithValue(
+        error.response?.data?.error || "Failed to fetch tasks"
+      );
     }
   }
 );
@@ -46,7 +49,9 @@ export const fetchTaskStats = createAsyncThunk(
       const response = await axiosInstance.get("/tasks/stats");
       return response.data.stats;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || "Failed to fetch stats");
+      return rejectWithValue(
+        error.response?.data?.error || "Failed to fetch stats"
+      );
     }
   }
 );
@@ -58,7 +63,9 @@ export const createTask = createAsyncThunk(
       const response = await axiosInstance.post("/tasks", taskData);
       return response.data.task;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || "Failed to create task");
+      return rejectWithValue(
+        error.response?.data?.error || "Failed to create task"
+      );
     }
   }
 );
@@ -67,25 +74,37 @@ export const updateTask = createAsyncThunk(
   "tasks/updateTask",
   async (
     { id, data }: { id: string; data: UpdateTaskDto },
-    { rejectWithValue }
+    { dispatch, rejectWithValue }
   ) => {
     try {
       const response = await axiosInstance.put(`/tasks/${id}`, data);
       return response.data.task;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || "Failed to update task");
+      // If the server lost in-memory data (dev hot reload) or task was removed elsewhere,
+      // refresh the list so UI doesn't keep showing stale tasks.
+      if (error.response?.status === 404) {
+        dispatch(fetchTasks());
+      }
+      return rejectWithValue(
+        error.response?.data?.error || "Failed to update task"
+      );
     }
   }
 );
 
 export const deleteTask = createAsyncThunk(
   "tasks/deleteTask",
-  async (id: string, { rejectWithValue }) => {
+  async (id: string, { dispatch, rejectWithValue }) => {
     try {
       await axiosInstance.delete(`/tasks/${id}`);
       return id;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || "Failed to delete task");
+      if (error.response?.status === 404) {
+        dispatch(fetchTasks());
+      }
+      return rejectWithValue(
+        error.response?.data?.error || "Failed to delete task"
+      );
     }
   }
 );
@@ -150,7 +169,8 @@ const taskSlice = createSlice({
         // Update stats
         state.stats.total++;
         if (action.payload.status === "todo") state.stats.todo++;
-        else if (action.payload.status === "in_progress") state.stats.inProgress++;
+        else if (action.payload.status === "in_progress")
+          state.stats.inProgress++;
         else if (action.payload.status === "completed") state.stats.completed++;
       })
       .addCase(createTask.rejected, (state, action) => {
@@ -166,9 +186,26 @@ const taskSlice = createSlice({
       })
       .addCase(updateTask.fulfilled, (state, action: PayloadAction<Task>) => {
         state.loading = false;
-        const index = state.tasks.findIndex((task) => task.id === action.payload.id);
+        const index = state.tasks.findIndex((t) => t.id === action.payload.id);
+        const prevStatus = index !== -1 ? state.tasks[index].status : null;
+        const nextStatus = action.payload.status;
+
         if (index !== -1) {
           state.tasks[index] = action.payload;
+        } else {
+          // If state got out of sync, still add the updated task so UI updates
+          state.tasks.push(action.payload);
+          state.stats.total++;
+        }
+
+        if (prevStatus && prevStatus !== nextStatus) {
+          if (prevStatus === "todo") state.stats.todo--;
+          else if (prevStatus === "in_progress") state.stats.inProgress--;
+          else if (prevStatus === "completed") state.stats.completed--;
+
+          if (nextStatus === "todo") state.stats.todo++;
+          else if (nextStatus === "in_progress") state.stats.inProgress++;
+          else if (nextStatus === "completed") state.stats.completed++;
         }
       })
       .addCase(updateTask.rejected, (state, action) => {
@@ -198,9 +235,11 @@ const taskSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
+
+    // Logout -> reset task state (avoid editing tasks from previous session/user)
+    builder.addCase(logout.fulfilled, () => initialState);
   },
 });
 
 export const { clearError, clearTasks } = taskSlice.actions;
 export default taskSlice.reducer;
-

@@ -9,6 +9,7 @@ import {
   updateTask,
   deleteTask,
 } from "@/store/slices/taskSlice";
+import { fetchProjects } from "@/store/slices/projectSlice";
 import { logout } from "@/store/slices/authSlice";
 import {
   Container,
@@ -35,7 +36,10 @@ export default function TasksPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { user, loading: authLoading } = useAppSelector((state) => state.auth);
-  const { tasks, loading: tasksLoading } = useAppSelector((state) => state.tasks);
+  const { tasks, loading: tasksLoading } = useAppSelector(
+    (state) => state.tasks
+  );
+  const { projects } = useAppSelector((state) => state.projects);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -44,6 +48,7 @@ export default function TasksPage() {
   useEffect(() => {
     if (user) {
       dispatch(fetchTasks());
+      dispatch(fetchProjects());
     }
   }, [user, dispatch]);
 
@@ -74,11 +79,20 @@ export default function TasksPage() {
     try {
       if (editingTask) {
         await dispatch(updateTask({ id: editingTask.id, data })).unwrap();
+        dispatch(fetchTasks());
       } else {
         await dispatch(createTask(data as CreateTaskDto)).unwrap();
       }
       handleCloseDialog();
     } catch (error) {
+      // This typically happens if the dev server restarted and in-memory tasks were reset,
+      // or if the task was deleted elsewhere. Refresh and close the dialog.
+      const msg = typeof error === "string" ? error : (error as any)?.message;
+      if (String(msg).toLowerCase().includes("task not found")) {
+        dispatch(fetchTasks());
+        handleCloseDialog();
+        return;
+      }
       console.error("Task operation error:", error);
     }
   };
@@ -88,6 +102,11 @@ export default function TasksPage() {
       try {
         await dispatch(deleteTask(taskId)).unwrap();
       } catch (error) {
+        const msg = typeof error === "string" ? error : (error as any)?.message;
+        if (String(msg).toLowerCase().includes("task not found")) {
+          dispatch(fetchTasks());
+          return;
+        }
         console.error("Delete task error:", error);
       }
     }
@@ -96,6 +115,8 @@ export default function TasksPage() {
   const handleStatusChange = async (taskId: string, status: TaskStatus) => {
     try {
       await dispatch(updateTask({ id: taskId, data: { status } })).unwrap();
+      // Keep UI counts + chips perfectly in sync with server truth
+      dispatch(fetchTasks());
     } catch (error) {
       console.error("Update task status error:", error);
     }
@@ -139,7 +160,9 @@ export default function TasksPage() {
         }}
       >
         <Toolbar sx={{ py: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1, gap: 2 }}>
+          <Box
+            sx={{ display: "flex", alignItems: "center", flexGrow: 1, gap: 2 }}
+          >
             <DashboardIcon sx={{ fontSize: 28 }} />
             <Typography variant="h6" fontWeight={600}>
               Task Manager
@@ -204,7 +227,14 @@ export default function TasksPage() {
       </AppBar>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <Typography variant="h4" fontWeight={700} color="text.primary">
             My Tasks
           </Typography>
@@ -232,7 +262,9 @@ export default function TasksPage() {
           >
             <Tab label={`All (${tasks.length})`} />
             <Tab
-              label={`To Do (${tasks.filter((t) => t.status === TaskStatus.TODO).length})`}
+              label={`To Do (${
+                tasks.filter((t) => t.status === TaskStatus.TODO).length
+              })`}
             />
             <Tab
               label={`In Progress (${
@@ -253,6 +285,7 @@ export default function TasksPage() {
           onEdit={handleOpenDialog}
           onDelete={handleDelete}
           onStatusChange={handleStatusChange}
+          projects={projects}
         />
       </Container>
 
@@ -279,8 +312,8 @@ export default function TasksPage() {
         onSubmit={handleSubmit}
         task={editingTask}
         loading={tasksLoading}
+        projects={projects}
       />
     </Box>
   );
 }
-

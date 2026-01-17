@@ -6,32 +6,50 @@ export interface User {
   createdAt: string;
 }
 
-let users: Map<string, User> = new Map();
+import { storage } from "./storage";
+
+const USERS_KEY = "users";
+
+const getAllUsers = (): User[] => {
+  return storage.get<User[]>(USERS_KEY) || [];
+};
+
+const setAllUsers = (users: User[]): void => {
+  storage.set(USERS_KEY, users);
+};
 
 export const userStorage = {
   create: (user: Omit<User, "id" | "createdAt">): User => {
+    const users = getAllUsers();
     const newUser: User = {
       ...user,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
     };
-    users.set(newUser.id, newUser);
+    users.push(newUser);
+    setAllUsers(users);
     return newUser;
   },
 
   findByEmail: (email: string): User | undefined => {
-    return Array.from(users.values()).find((user) => user.email === email);
+    const users = getAllUsers();
+    return users.find((user) => user.email === email);
   },
 
   findById: (id: string): User | undefined => {
-    return users.get(id);
+    const users = getAllUsers();
+    return users.find((user) => user.id === id);
   },
 
   getAll: (): User[] => {
-    return Array.from(users.values());
+    return getAllUsers();
   },
 
   delete: (id: string): boolean => {
-    return users.delete(id);
+    const users = getAllUsers();
+    const filtered = users.filter((u) => u.id !== id);
+    if (filtered.length === users.length) return false;
+    setAllUsers(filtered);
+    return true;
   },
 };

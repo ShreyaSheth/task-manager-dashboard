@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useFormik } from "formik";
+import * as yup from "yup";
 import {
   Dialog,
   DialogTitle,
@@ -27,32 +28,32 @@ export default function ProjectDialog({
   project,
   loading = false,
 }: ProjectDialogProps) {
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
+  const validationSchema = yup.object({
+    name: yup
+      .string()
+      .min(2, "Project name is too short")
+      .required("Project name is required"),
+    description: yup
+      .string()
+      .min(5, "Description is too short")
+      .required("Description is required"),
   });
 
-  useEffect(() => {
-    if (project) {
-      setFormData({
-        name: project.name,
-        description: project.description,
-      });
-    } else {
-      setFormData({
-        name: "",
-        description: "",
-      });
-    }
-  }, [project, open]);
-
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = () => {
-    onSubmit(formData);
-  };
+  const formik = useFormik({
+    initialValues: {
+      name: project?.name ?? "",
+      description: project?.description ?? "",
+    },
+    enableReinitialize: true,
+    validationSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+      try {
+        onSubmit(values);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -65,8 +66,16 @@ export default function ProjectDialog({
             label="Project Name"
             fullWidth
             required
-            value={formData.name}
-            onChange={(e) => handleChange("name", e.target.value)}
+            name="name"
+            value={formik.values.name}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={Boolean(formik.touched.name && formik.errors.name)}
+            helperText={
+              formik.touched.name && formik.errors.name
+                ? formik.errors.name
+                : " "
+            }
             placeholder="Enter project name"
           />
 
@@ -76,8 +85,18 @@ export default function ProjectDialog({
             required
             multiline
             rows={4}
-            value={formData.description}
-            onChange={(e) => handleChange("description", e.target.value)}
+            name="description"
+            value={formik.values.description}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={Boolean(
+              formik.touched.description && formik.errors.description
+            )}
+            helperText={
+              formik.touched.description && formik.errors.description
+                ? formik.errors.description
+                : " "
+            }
             placeholder="Describe your project"
           />
         </Box>
@@ -87,9 +106,9 @@ export default function ProjectDialog({
           Cancel
         </Button>
         <Button
-          onClick={handleSubmit}
+          onClick={() => formik.handleSubmit()}
           variant="contained"
-          disabled={loading || !formData.name || !formData.description}
+          disabled={loading || formik.isSubmitting || !formik.isValid}
           sx={{
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           }}

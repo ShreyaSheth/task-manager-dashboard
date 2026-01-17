@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { authService } from '@/lib/auth';
+import { NextRequest, NextResponse } from "next/server";
+import { authService } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,14 +9,14 @@ export async function POST(request: NextRequest) {
     // Validate input
     if (!email || !password || !name) {
       return NextResponse.json(
-        { error: 'Email, password, and name are required' },
+        { error: "Email, password, and name are required" },
         { status: 400 }
       );
     }
 
     if (password.length < 6) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
+        { error: "Password must be at least 6 characters" },
         { status: 400 }
       );
     }
@@ -27,27 +27,26 @@ export async function POST(request: NextRequest) {
     // Set cookie
     const response = NextResponse.json(
       {
-        message: 'User created successfully',
+        message: "User created successfully",
         user: result.user,
       },
       { status: 201 }
     );
 
-    response.cookies.set('token', result.token, {
+    response.cookies.set("token", result.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: request.nextUrl.protocol === "https:",
+      sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
+      path: "/",
     });
 
     return response;
   } catch (error) {
-    console.error('Signup error:', error);
+    console.error("Signup error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Signup failed' },
+      { error: error instanceof Error ? error.message : "Signup failed" },
       { status: 400 }
     );
   }
 }
-

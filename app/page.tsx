@@ -40,7 +40,7 @@ export default function Home() {
         <Box className="text-center">
           <Box className="flex justify-center mb-6">
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-full shadow-lg">
-              <TaskAltIcon className="text-white" style={{ fontSize: 80 }} />
+              <TaskAltIcon className="text-white" style={{ fontSize: 60 }} />
             </div>
           </Box>
 
@@ -92,10 +92,10 @@ export default function Home() {
 
               <Link href="/login" className="w-full sm:w-auto">
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   size="large"
                   startIcon={<LoginIcon />}
-                  className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 py-3 px-8 w-full sm:w-auto"
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 px-8 w-full sm:w-auto"
                 >
                   Sign In
                 </Button>

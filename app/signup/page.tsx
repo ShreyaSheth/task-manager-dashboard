@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { signup, clearError } from "@/store/slices/authSlice";
 import Link from "next/link";
+import { useFormik } from "formik";
+import * as yup from "yup";
 import {
   Container,
   Box,
@@ -26,13 +28,6 @@ export default function SignupPage() {
     error: authError,
   } = useAppSelector((state) => state.auth);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [localError, setLocalError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
   useEffect(() => {
     // Clear any previous errors when component mounts
     dispatch(clearError());
@@ -45,37 +40,50 @@ export default function SignupPage() {
     }
   }, [user, authLoading, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLocalError("");
+  const validationSchema = yup.object({
+    name: yup
+      .string()
+      .min(2, "Enter your full name")
+      .required("Name is required"),
+    email: yup
+      .string()
+      .email("Enter a valid email")
+      .required("Email is required"),
+    password: yup
+      .string()
+      .min(6, "Password must be at least 6 characters")
+      .required("Password is required"),
+    confirmPassword: yup
+      .string()
+      .oneOf([yup.ref("password")], "Passwords do not match")
+      .required("Confirm password is required"),
+  });
 
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      setLocalError("Passwords do not match");
-      return;
-    }
-
-    // Validate password length
-    if (password.length < 6) {
-      setLocalError("Password must be at least 6 characters");
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      const result = await dispatch(signup({ email, password, name })).unwrap();
-      // On success, redirect to dashboard
-      if (result) {
-        router.push("/dashboard");
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+    validationSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+      try {
+        const result = await dispatch(
+          signup({
+            email: values.email,
+            password: values.password,
+            name: values.name,
+          })
+        ).unwrap();
+        if (result) router.push("/dashboard");
+      } catch (err) {
+        console.error("Signup error:", err);
+      } finally {
+        setSubmitting(false);
       }
-    } catch (err) {
-      // Error is handled by Redux
-      console.error("Signup error:", err);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    },
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-100 px-4">
@@ -97,19 +105,27 @@ export default function SignupPage() {
             </Typography>
           </Box>
 
-          {(localError || authError) && (
+          {authError && (
             <Alert severity="error" className="mb-4">
-              {localError || authError}
+              {authError}
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={formik.handleSubmit}>
             <TextField
               fullWidth
               label="Full Name"
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              name="name"
+              value={formik.values.name}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={Boolean(formik.touched.name && formik.errors.name)}
+              helperText={
+                formik.touched.name && formik.errors.name
+                  ? formik.errors.name
+                  : " "
+              }
               required
               variant="outlined"
               autoComplete="name"
@@ -121,8 +137,16 @@ export default function SignupPage() {
               fullWidth
               label="Email Address"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={formik.values.email}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={Boolean(formik.touched.email && formik.errors.email)}
+              helperText={
+                formik.touched.email && formik.errors.email
+                  ? formik.errors.email
+                  : " "
+              }
               required
               variant="outlined"
               autoComplete="email"
@@ -133,12 +157,19 @@ export default function SignupPage() {
               fullWidth
               label="Password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              value={formik.values.password}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={Boolean(formik.touched.password && formik.errors.password)}
+              helperText={
+                formik.touched.password && formik.errors.password
+                  ? formik.errors.password
+                  : "Must be at least 6 characters"
+              }
               required
               variant="outlined"
               autoComplete="new-password"
-              helperText="Must be at least 6 characters"
               sx={{ mb: 2 }}
             />
 
@@ -146,8 +177,18 @@ export default function SignupPage() {
               fullWidth
               label="Confirm Password"
               type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              name="confirmPassword"
+              value={formik.values.confirmPassword}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={Boolean(
+                formik.touched.confirmPassword && formik.errors.confirmPassword
+              )}
+              helperText={
+                formik.touched.confirmPassword && formik.errors.confirmPassword
+                  ? formik.errors.confirmPassword
+                  : " "
+              }
               required
               variant="outlined"
               autoComplete="new-password"
@@ -159,11 +200,11 @@ export default function SignupPage() {
               fullWidth
               variant="contained"
               size="large"
-              disabled={submitting || authLoading}
+              disabled={formik.isSubmitting || authLoading}
               className="bg-purple-600 hover:bg-purple-700 py-3"
               sx={{ mt: 2 }}
             >
-              {submitting || authLoading ? (
+              {formik.isSubmitting || authLoading ? (
                 <CircularProgress size={24} color="inherit" />
               ) : (
                 "Sign Up"

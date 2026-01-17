@@ -58,6 +58,14 @@ export default function DashboardPage() {
     }
   }, [user, dispatch]);
 
+  useEffect(() => {
+    // Avoid calling router.* during render (React warning).
+    // If auth finished and user is missing, redirect to login.
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [loading, user, router]);
+
   const handleCreateProject = async (data: CreateProjectDto) => {
     try {
       await dispatch(createProject(data)).unwrap();

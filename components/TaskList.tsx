@@ -1,6 +1,7 @@
 "use client";
 
 import { Task, TaskStatus } from "@/types";
+import { Project } from "@/lib/projects";
 import { Box, Typography, CircularProgress } from "@mui/material";
 import TaskCard from "./TaskCard";
 
@@ -10,6 +11,7 @@ interface TaskListProps {
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onStatusChange: (taskId: string, status: TaskStatus) => void;
+  projects?: Project[];
 }
 
 export default function TaskList({
@@ -18,6 +20,7 @@ export default function TaskList({
   onEdit,
   onDelete,
   onStatusChange,
+  projects = [],
 }: TaskListProps) {
   if (loading) {
     return (
@@ -52,6 +55,13 @@ export default function TaskList({
     );
   }
 
+  // Helper to get project name by ID
+  const getProjectName = (projectId?: string): string | undefined => {
+    if (!projectId) return undefined;
+    const project = projects.find((p) => p.id === projectId);
+    return project?.name;
+  };
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {tasks.map((task) => (
@@ -61,9 +71,9 @@ export default function TaskList({
           onEdit={onEdit}
           onDelete={onDelete}
           onStatusChange={onStatusChange}
+          projectName={getProjectName(task.projectId)}
         />
       ))}
     </Box>
   );
 }
-

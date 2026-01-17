@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { login, clearError } from "@/store/slices/authSlice";
 import Link from "next/link";
+import { useFormik } from "formik";
+import * as yup from "yup";
 import {
   Container,
   Box,
@@ -26,10 +28,6 @@ export default function LoginPage() {
     error: authError,
   } = useAppSelector((state) => state.auth);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
   useEffect(() => {
     // Clear any previous errors when component mounts
     dispatch(clearError());
@@ -42,23 +40,34 @@ export default function LoginPage() {
     }
   }, [user, authLoading, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
+  const validationSchema = yup.object({
+    email: yup
+      .string()
+      .email("Enter a valid email")
+      .required("Email is required"),
+    password: yup
+      .string()
+      .min(6, "Password must be at least 6 characters")
+      .required("Password is required"),
+  });
 
-    try {
-      const result = await dispatch(login({ email, password })).unwrap();
-      // On success, redirect to dashboard
-      if (result) {
-        router.push("/dashboard");
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+      password: "",
+    },
+    validationSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+      try {
+        const result = await dispatch(login(values)).unwrap();
+        if (result) router.push("/dashboard");
+      } catch (err) {
+        console.error("Login error:", err);
+      } finally {
+        setSubmitting(false);
       }
-    } catch (err) {
-      // Error is handled by Redux
-      console.error("Login error:", err);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    },
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
@@ -86,13 +95,21 @@ export default function LoginPage() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={formik.handleSubmit}>
             <TextField
               fullWidth
               label="Email Address"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={formik.values.email}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={Boolean(formik.touched.email && formik.errors.email)}
+              helperText={
+                formik.touched.email && formik.errors.email
+                  ? formik.errors.email
+                  : " "
+              }
               required
               variant="outlined"
               autoComplete="email"
@@ -104,8 +121,16 @@ export default function LoginPage() {
               fullWidth
               label="Password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              value={formik.values.password}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={Boolean(formik.touched.password && formik.errors.password)}
+              helperText={
+                formik.touched.password && formik.errors.password
+                  ? formik.errors.password
+                  : " "
+              }
               required
               variant="outlined"
               autoComplete="current-password"
@@ -117,11 +142,11 @@ export default function LoginPage() {
               fullWidth
               variant="contained"
               size="large"
-              disabled={submitting || authLoading}
+              disabled={formik.isSubmitting || authLoading}
               className="bg-indigo-600 hover:bg-indigo-700 py-3"
               sx={{ mt: 2 }}
             >
-              {submitting || authLoading ? (
+              {formik.isSubmitting || authLoading ? (
                 <CircularProgress size={24} color="inherit" />
               ) : (
                 "Sign In"

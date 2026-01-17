@@ -5,9 +5,10 @@ import { authService } from "@/lib/auth";
 // GET /api/projects/[id] - Get a specific project
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get("token")?.value;
     if (!token) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -18,7 +19,7 @@ export async function GET(
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    const project = projectStorage.getById(params.id);
+    const project = projectStorage.getById(id);
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
@@ -40,9 +41,10 @@ export async function GET(
 // PUT /api/projects/[id] - Update a project
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get("token")?.value;
     if (!token) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -55,11 +57,7 @@ export async function PUT(
 
     const body = await request.json();
     const { name, description } = body;
-    const project = projectStorage.update(
-      params.id,
-      { name, description },
-      user.id
-    );
+    const project = projectStorage.update(id, { name, description }, user.id);
 
     if (!project) {
       return NextResponse.json(
@@ -81,9 +79,10 @@ export async function PUT(
 // DELETE /api/projects/[id] - Delete a project
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get("token")?.value;
 
     if (!token) {
@@ -95,7 +94,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    const success = projectStorage.delete(params.id, user.id);
+    const success = projectStorage.delete(id, user.id);
 
     if (!success) {
       return NextResponse.json(

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axiosInstance from "@/lib/axios";
 import { Project, CreateProjectDto } from "@/lib/projects";
+import { logout } from "@/store/slices/authSlice";
 
 interface ProjectState {
   projects: Project[];
@@ -209,6 +210,9 @@ const projectSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
+
+    // Logout -> reset projects state (avoid stale data across sessions/users)
+    builder.addCase(logout.fulfilled, () => initialState);
   },
 });
 
