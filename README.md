@@ -4,28 +4,10 @@ A modern, full-stack task management application built with Next.js 16, featurin
 
 ## ✨ Features
 
-### 🔐 Authentication System
-
-- **User Signup** - Create new accounts with email, name, and password
-- **User Login** - Secure authentication with JWT tokens
-- **Protected Routes** - Middleware-based route protection
-- **Session Management** - HTTP-only cookies for secure token storage
-- **Auto-redirect** - Seamless navigation for authenticated/unauthenticated users
-
-### 🎨 Modern UI/UX
-
-- **Material-UI (MUI) Components** - Professional, accessible UI components
-- **TailwindCSS** - Utility-first CSS for custom styling
-- **Responsive Design** - Mobile-first, works on all screen sizes
-- **Beautiful Gradients** - Eye-catching color schemes
-- **Smooth Animations** - Hover effects and transitions
-
-### 📊 Dashboard
-
-- **Stats Overview** - Track projects, tasks, and completion rates
-- **Quick Actions** - Easy access to create projects and tasks
-- **User Profile** - Display account information
-- **Calendar Widget** - Today's overview section
+- **Authentication** – JWT sign up/login, middleware protection, and secure HTTP-only cookies; session state hydrated via Redux.
+- **Tasks & Projects** – Create, edit, delete tasks and projects via Next.js API routes; tasks can belong to projects, include due dates, priorities, and statuses (and filterable from the UI).
+- **UI Stack** – TailwindCSS layout, Material-UI components, responsive dashboard, task dialog, project dialog, and badge chips with hover effects.
+- **Client State** – Redux Toolkit slices for `auth`, `tasks`, and `projects`, plus Axios instance with centralized 401 handling and storage helpers for persisted JSON-backed data.
 
 ## 🚀 Getting Started
 
@@ -282,50 +264,37 @@ Get current authenticated user.
 - [x] Middleware protection
 - [x] Dashboard UI
 
-### Phase 2: Projects (Coming Soon)
+### Phase 2: Projects
 
-- [ ] Create projects
-- [ ] Edit projects
-- [ ] Delete projects
-- [ ] Project listing
-- [ ] Project details page
+- [x] Create projects
+- [x] Edit projects
+- [x] Delete projects
+- [x] Project listing
 
-### Phase 3: Tasks (Coming Soon)
+### Phase 3: Tasks
 
-- [ ] Create tasks within projects
-- [ ] Edit tasks
-- [ ] Delete tasks
-- [ ] Mark tasks as complete
-- [ ] Task priority levels
-- [ ] Task due dates
-
-### Phase 4: Advanced Features (Future)
-
-- [ ] Task filtering and sorting
-- [ ] Search functionality
-- [ ] Dark mode
-- [ ] Export data
-- [ ] Task statistics and charts
+- [x] Create tasks within projects
+- [x] Edit tasks
+- [x] Delete tasks
+- [x] Filter tasks by project/status
+- [x] Task priority levels, due dates, completion toggles
 
 ## ⚠️ Important Notes
 
 ### Development vs Production
 
-**This application uses in-memory storage for users.** This means:
+**This application uses a JSON-backed file store (`.task-manager-store.json`).** This keeps authentication/tasks/projects shared across Next.js workers while remaining lightweight for local development.
 
-- ✅ Perfect for development and testing
-- ✅ No database setup required
-- ❌ Data is lost when server restarts
-- ❌ Not suitable for production
+- ✅ No DB setup required
+- ✅ Tokens stored in secure cookies and refreshed from Redux
+- ✅ Works well for prototyping and demos
 
 **For Production:**
 
 - Replace `lib/users.ts` with a real database (MongoDB, PostgreSQL, etc.)
-- Use a strong, random JWT_SECRET
-- Enable HTTPS
-- Implement rate limiting
-- Add input validation and sanitization
-- Set up proper error logging
+- Persist tasks/projects in a proper datastore
+- Ensure injectable secrets (`JWT_SECRET`) and HTTPS configuration
+- Add rate limiting, validation, sanitization, and detailed logging
 
 ## 🤝 Contributing
 
