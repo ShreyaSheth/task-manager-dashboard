@@ -23,6 +23,10 @@ import {
   Tabs,
   Tab,
   Fab,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -44,6 +48,7 @@ export default function TasksPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [tabValue, setTabValue] = useState(0);
+  const [projectFilter, setProjectFilter] = useState<string>("all");
 
   useEffect(() => {
     if (user) {
@@ -142,11 +147,23 @@ export default function TasksPage() {
   }
 
   const filteredTasks = tasks.filter((task) => {
-    if (tabValue === 0) return true; // All
-    if (tabValue === 1) return task.status === TaskStatus.TODO;
-    if (tabValue === 2) return task.status === TaskStatus.IN_PROGRESS;
-    if (tabValue === 3) return task.status === TaskStatus.COMPLETED;
-    return true;
+    // Filter by status
+    let matchesStatus = true;
+    if (tabValue === 1) matchesStatus = task.status === TaskStatus.TODO;
+    else if (tabValue === 2)
+      matchesStatus = task.status === TaskStatus.IN_PROGRESS;
+    else if (tabValue === 3)
+      matchesStatus = task.status === TaskStatus.COMPLETED;
+
+    // Filter by project
+    let matchesProject = true;
+    if (projectFilter === "none") {
+      matchesProject = !task.projectId;
+    } else if (projectFilter !== "all") {
+      matchesProject = task.projectId === projectFilter;
+    }
+
+    return matchesStatus && matchesProject;
   });
 
   return (
@@ -253,6 +270,26 @@ export default function TasksPage() {
           </Button>
         </Box>
 
+        {/* Project Filter */}
+        <Box sx={{ mb: 3 }}>
+          <FormControl sx={{ minWidth: 200 }} size="small">
+            <InputLabel>Filter by Project</InputLabel>
+            <Select
+              value={projectFilter}
+              label="Filter by Project"
+              onChange={(e) => setProjectFilter(e.target.value)}
+            >
+              <MenuItem value="all">All Projects</MenuItem>
+              <MenuItem value="none">No Project</MenuItem>
+              {projects.map((project) => (
+                <MenuItem key={project.id} value={project.id}>
+                  {project.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
           <Tabs
             value={tabValue}
@@ -307,6 +344,7 @@ export default function TasksPage() {
       </Fab>
 
       <TaskDialog
+        key={editingTask ? `edit-${editingTask.id}` : "create-new"}
         open={dialogOpen}
         onClose={handleCloseDialog}
         onSubmit={handleSubmit}

@@ -163,13 +163,15 @@ export default function TaskDialog({
           </FormControl>
 
           <FormControl fullWidth>
-            <InputLabel>Project</InputLabel>
+            <InputLabel shrink>Project</InputLabel>
             <Select
               name="projectId"
               value={formik.values.projectId}
               label="Project"
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              displayEmpty
+              notched
             >
               <MenuItem value="">
                 <em>No Project</em>

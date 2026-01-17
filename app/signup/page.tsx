@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { signup, clearError } from "@/store/slices/authSlice";
@@ -16,8 +16,12 @@ import {
   Paper,
   Alert,
   CircularProgress,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 export default function SignupPage() {
   const dispatch = useAppDispatch();
@@ -27,6 +31,9 @@ export default function SignupPage() {
     loading: authLoading,
     error: authError,
   } = useAppSelector((state) => state.auth);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     // Clear any previous errors when component mounts
@@ -156,7 +163,7 @@ export default function SignupPage() {
             <TextField
               fullWidth
               label="Password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               value={formik.values.password}
               onChange={formik.handleChange}
@@ -171,12 +178,25 @@ export default function SignupPage() {
               variant="outlined"
               autoComplete="new-password"
               sx={{ mb: 2 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
 
             <TextField
               fullWidth
               label="Confirm Password"
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
               value={formik.values.confirmPassword}
               onChange={formik.handleChange}
@@ -193,6 +213,21 @@ export default function SignupPage() {
               variant="outlined"
               autoComplete="new-password"
               sx={{ mb: 2 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle confirm password visibility"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      edge="end"
+                    >
+                      {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
 
             <Button

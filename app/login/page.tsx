@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { login, clearError } from "@/store/slices/authSlice";
@@ -16,8 +16,12 @@ import {
   Paper,
   Alert,
   CircularProgress,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 export default function LoginPage() {
   const dispatch = useAppDispatch();
@@ -27,6 +31,8 @@ export default function LoginPage() {
     loading: authLoading,
     error: authError,
   } = useAppSelector((state) => state.auth);
+
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     // Clear any previous errors when component mounts
@@ -120,7 +126,7 @@ export default function LoginPage() {
             <TextField
               fullWidth
               label="Password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               value={formik.values.password}
               onChange={formik.handleChange}
@@ -135,6 +141,19 @@ export default function LoginPage() {
               variant="outlined"
               autoComplete="current-password"
               sx={{ mb: 3 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
 
             <Button
