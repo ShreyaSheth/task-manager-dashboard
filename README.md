@@ -289,13 +289,6 @@ Get current authenticated user.
 - ✅ Tokens stored in secure cookies and refreshed from Redux
 - ✅ Works well for prototyping and demos
 
-**For Production:**
-
-- Replace `lib/users.ts` with a real database (MongoDB, PostgreSQL, etc.)
-- Persist tasks/projects in a proper datastore
-- Ensure injectable secrets (`JWT_SECRET`) and HTTPS configuration
-- Add rate limiting, validation, sanitization, and detailed logging
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
